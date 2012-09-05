@@ -106,7 +106,7 @@ $listings = 0;
 				
 			</td></tr><tr><td style="border:none; vertical-align:middle;">
 			<?php if (!(tep_has_product_attributes($listing['products_id']))) {?>
-			<input type="submit" class="buy" data-theme="e" value="<?php echo $['Add to Cart'] ?>" /><br/>
+			<input type="submit" class="buy" data-theme="e" value="<?php echo $_['Add to Cart'] ?>" /><br/>
 			<?php } ?>	
 			<a href="prod<?php echo $listing['products_id']; ?>.htm?products_id=<?php echo $listing['products_id']; ?>" class="ui-link" style="color: #2489CE !important; text-shadow: none;"><?php echo $_['More info...']; ?></a>
 			</td></tr></table>

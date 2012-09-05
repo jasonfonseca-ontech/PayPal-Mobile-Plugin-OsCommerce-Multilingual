@@ -6,9 +6,7 @@
 	echo tep_draw_form('cart_quantity', tep_href_link(FILENAME_SHOPPING_CART, 'action=update_product'));
 	
 	if ($_SESSION['cart']->count_contents() == 0) {
-	
-	 <p><?php  echo $_['Your cart is empty']; ?>; </p>
-	
+	   echo  "<p>" . $_['Your cart is empty']. "</p>";
 	} else {
 ?>
 

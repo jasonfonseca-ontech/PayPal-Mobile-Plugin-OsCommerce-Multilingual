@@ -118,7 +118,7 @@
 		if ($description) {
 			echo $description;
 		} else {
-			echo <?php echo $_['There is no description for this product']; ?> 
+			echo $_['There is no description for this product']; 
 		};	
 		?>
 		</div>

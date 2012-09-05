@@ -80,7 +80,7 @@ if ($_GET['keywords'])
 <?php
 
 } else {
-<p>echo <?php  echo $_['No results'];?></p>
+ echo "<p>" . $_['No results'] . "</p>";
 }
 
 ?>
