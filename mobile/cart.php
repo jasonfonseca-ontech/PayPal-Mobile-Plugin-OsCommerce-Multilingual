@@ -107,7 +107,7 @@
 </table>
 
 <div style="text-align:center; padding-top:10px;">
-	<a rel="external" href="./ipn_main_handler.php?type=ec">
+	<a rel="external" href="<?php echo IPN_HANDLER ?>?type=ec">
 		    <img id="paypalbutton" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypal'] ?>" />
 		    <img style="display:none;" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypal'] ?>" />
     </a>
