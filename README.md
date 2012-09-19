@@ -3,6 +3,8 @@ PayPal Mobile Plugin Installation Instructions
 <sup> Powered by [ezimerchant](http://ezimerchant.com/)</sup><br>
  <sup>OsCommerce 2.3+ instructions</sup>
 
+1. Install the <a href="https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/library_plugins_oscommerce">Paypal OsCommercce Express Checkout</a> plugin if you do not already have it.
+
 1. Click the 'ZIP' button at the top of this page to download the plugin.
 
 2. If you haven't already setup PayPal Express Checkout inside your OsCommerce installation, please follow these instructions, if you have already done so, please skip to step 3:
