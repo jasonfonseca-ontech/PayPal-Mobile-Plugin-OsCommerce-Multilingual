@@ -23,7 +23,6 @@
 	    $catalog_path = $path['catalog_physical'];
 	  
 	}
-	define("IPN_HANDLER", preg_replace("/\/+$/","",DIR_WS_CATALOG) . "/ext/modules/payment/paypal/express_mobile.php");
 
 	if(defined("PROJECT_VERSION"))
 	{
@@ -35,9 +34,13 @@
 	}
 	else
 		define("PP_OSC_VERSION", 2.3);
-		
+
+
+
 	if(PP_OSC_VERSION<2.3)
 	{
+		define("IPN_HANDLER", preg_replace("/\/+$/","",DIR_WS_CATALOG) . "/ext/modules/payment/paypal/express_mobile.php");
+
 		if(!function_exists("tep_draw_button")) {
 			function tep_draw_button($title = null, $icon = null, $link = null, $priority = null, $params = null) {
 			static $button_counter = 1;
@@ -115,7 +118,11 @@
 			return $button;
 		  }
 		}
-	}	
+	}
+	else
+	{
+		define("IPN_HANDLER", "ipn_main_handler.php");
+	}
 	
 	$defaults = array(
 		'languages_code' => 'fr',
