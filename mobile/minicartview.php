@@ -14,14 +14,14 @@ if (($_SESSION['cart']->count_contents()) == 0) {
 ?>
 
 <li data-role="list-divider" role="heading" class="ui-li ui-li-divider ui-btn ui-bar-b ui-btn-up-undefined ui-corner-top"><?php echo $_['Shopping Cart']; ?>
-<div style="float: right;"><a href="index.php?main_page=shopping_cart" class="buy" rel="external" style="color: #fff;"><?php echo $_['Edit...']; ?></a></div>
+<div style="float: right;"><a href="index.php?main_page=shopping_cart" class="buy" rel="external" style="color: #fff;">Edit...</a></div>
 </li>
 
 <li style="text-align:center; padding:5px;" class="ui-li ui-li-static ui-body-c">
 	<table>
 		<tr>
-			<th><div style="width:30px;"><?php echo $_['Qty']; ?></div></th>
-			<th><div style="width:180px; padding-top:5px; white-space:nowrap; overflow:hidden;"><?php echo $_['Product']; ?></div></th>
+			<th><div style="width:30px;">Qty <?php //echo $_['Qty']; ?></div></th>
+			<th><div style="width:180px; padding-top:5px; white-space:nowrap; overflow:hidden;">Product <?php //echo $_['Product']; ?></div></th>
 			<th><div style="width:60px;"> </div></th>
 		</tr>
 	</table>
@@ -61,9 +61,9 @@ for ($i=0;$i<sizeof($products);$i++) {
 <li class="ui-li ui-li-static ui-body-c" style="text-align: center; padding: 0; padding-top: 5px; padding-bottom: 5px;">
 	<div class="ui-footer-fixed">
 
-	<a rel="external" href="ipn_main_handler.php?type=ec">
-		    <img id="paypalbutton" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypal'] ?>" />
-		    <img style="display:none;" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypalDown'] ?>" />
+	<a rel="external" href="./ext/modules/payment/paypal/express.php">
+		    <img id="paypalbutton" src="./mobile/images/btn_checkout_278x43.png" />
+		    <img style="display:none;" src="./mobile/images/btn_checkout_278x43down.png" />
     </a>
 	</div>
 </li>
