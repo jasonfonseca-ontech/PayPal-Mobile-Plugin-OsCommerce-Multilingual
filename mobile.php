@@ -1,611 +1,324 @@
 <?php
 
-/*
-  $Id: express.php 2011-12-13 20:00:00 webprojectsol $
-
-  osCommerce, Open Source E-Commerce Solutions
-  http://www.oscommerce.com
-
-  Copyright (c) 2011 Web Project Solutions LLC www.webprojectsol.com
-
-  Released under the GNU General Public License
- */
-
-//chdir('../../../../');
-
-chdir('../../');
-require('includes/application_top.php');
-
-// if the customer is not logged on, redirect them to the login page
-/*
-if (!tep_session_is_registered('customer_id')) {
-    $snapshot = array('page' => 'ext/modules/payment/paypal/express.php',
-        'mode' => $request_type,
-        'get' => $_GET,
-        'post' => $_POST);
-
-    $navigation->set_snapshot($snapshot);
-
-    tep_redirect(tep_href_link(FILENAME_LOGIN, '', 'SSL'));
-}*/
-
-
-// initialize variables if the customer is not logged in (frm 2.3)
-if (!tep_session_is_registered('customer_id')) {
-  	$customer_id = 0;
-	  $customer_default_address_id = 0;
-}
-
-
-// if there is nothing in the customers cart, redirect them to the shopping cart page
-if ($cart->count_contents() < 1) {
-    tep_redirect(tep_href_link(FILENAME_SHOPPING_CART));
-}
-
-require('includes/modules/payment/paypal_express.php');
-
-$paypal_express = new paypal_express();
-
-if (!$paypal_express->check() || !$paypal_express->enabled) {
-    tep_redirect(tep_href_link(FILENAME_SHOPPING_CART));
-}
-
-if (MODULE_PAYMENT_PAYPAL_EXPRESS_TRANSACTION_SERVER == 'Live') {
-    $api_url = 'https://api-3t.paypal.com/nvp';
-    $paypal_url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout';
-} else {
-    $api_url = 'https://api-3t.sandbox.paypal.com/nvp';
-    $paypal_url = 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout';
-}
-
-if (!tep_session_is_registered('sendto')) {
-    tep_session_register('sendto');
-    $sendto = $customer_default_address_id;
-}
-
-if (!tep_session_is_registered('billto')) {
-    tep_session_register('billto');
-    $billto = $customer_default_address_id;
-}
-
-// register a random ID in the session to check throughout the checkout procedure
-// against alterations in the shopping cart contents
-if (!tep_session_is_registered('cartID'))
-    tep_session_register('cartID');
-$cartID = $cart->cartID;
-
-$params = array('USER' => MODULE_PAYMENT_PAYPAL_EXPRESS_API_USERNAME,
-    'PWD' => MODULE_PAYMENT_PAYPAL_EXPRESS_API_PASSWORD,
-    'VERSION' => '85.0',
-    'SIGNATURE' => MODULE_PAYMENT_PAYPAL_EXPRESS_API_SIGNATURE);
-
-
-switch ($_GET['osC_Action']) {
-
-    case 'retrieve':
-        $params['METHOD'] = 'GetExpressCheckoutDetails';
-        $params['TOKEN'] = $_GET['token'];
-
-        $post_string = '';
-
-        foreach ($params as $key => $value) {
-            $post_string .= $key . '=' . urlencode(trim($value)) . '&';
-        }
-
-        $post_string = substr($post_string, 0, -1);
-
-        $response = $paypal_express->sendTransactionToGateway($api_url, $post_string);
-        $response_array = array();
-        parse_str($response, $response_array);
-
-        if (($response_array['ACK'] == 'Success') || ($response_array['ACK'] == 'SuccessWithWarning')) {
-      
-        
-        
-//----------------------------------- Add on to create account (from 2.3)
-
-// check if e-mail address exists in database and login or create customer account
-        if (!tep_session_is_registered('customer_id')) {
-          $force_login = true;
-
-          $email_address = tep_db_prepare_input($response_array['EMAIL']);
-
-          $check_query = tep_db_query("select * from " . TABLE_CUSTOMERS . " where customers_email_address = '" . tep_db_input($email_address) . "' limit 1");
-          if (tep_db_num_rows($check_query)) {
-            $check = tep_db_fetch_array($check_query);
-
-            $customer_id = $check['customers_id'];
-            $customers_firstname = $check['customers_firstname'];
-            $customer_default_address_id = $check['customers_default_address_id'];
-          } else {
-            $customers_firstname = tep_db_prepare_input($response_array['FIRSTNAME']);
-            $customers_lastname = tep_db_prepare_input($response_array['LASTNAME']);
-
-            $customer_password = tep_create_random_value(max(ENTRY_PASSWORD_MIN_LENGTH, 8));
-
-            $sql_data_array = array('customers_firstname' => $customers_firstname,
-                                    'customers_lastname' => $customers_lastname,
-                                    'customers_email_address' => $email_address,
-                                    'customers_telephone' => '',
-                                    'customers_fax' => '',
-                                    'customers_newsletter' => '0',
-                                    'customers_password' => tep_encrypt_password($customer_password));
-
-            if (isset($response_array['PHONENUM']) && tep_not_null($response_array['PHONENUM'])) {
-              $customers_telephone = tep_db_prepare_input($response_array['PHONENUM']);
-
-              $sql_data_array['customers_telephone'] = $customers_telephone;
-            }
-
-            tep_db_perform(TABLE_CUSTOMERS, $sql_data_array);
-
-            $customer_id = tep_db_insert_id();
-
-            tep_db_query("insert into " . TABLE_CUSTOMERS_INFO . " (customers_info_id, customers_info_number_of_logons, customers_info_date_account_created) values ('" . (int)$customer_id . "', '0', now())");
-
-// build the message content
-            $name = $customers_firstname . ' ' . $customers_lastname;
-            $email_text = sprintf(EMAIL_GREET_NONE, $customers_firstname) . EMAIL_WELCOME . sprintf(MODULE_PAYMENT_PAYPAL_EXPRESS_EMAIL_PASSWORD, $email_address, $customer_password) . EMAIL_TEXT . EMAIL_CONTACT . EMAIL_WARNING;
-            tep_mail($name, $email_address, EMAIL_SUBJECT, $email_text, STORE_OWNER, STORE_OWNER_EMAIL_ADDRESS);
-          }
-
-          if (SESSION_RECREATE == 'True') {
-            tep_session_recreate();
-          }
-
-          $customer_first_name = $customers_firstname;
-          tep_session_register('customer_id');
-          tep_session_register('customer_first_name');
-
-// reset session token
-          $sessiontoken = md5(tep_rand() . tep_rand() . tep_rand() . tep_rand());
-        }
-
-// check if paypal shipping address exists in the address book
-        $ship_firstname = tep_db_prepare_input(substr($response_array['SHIPTONAME'], 0, strpos($response_array['SHIPTONAME'], ' ')));
-        $ship_lastname = tep_db_prepare_input(substr($response_array['SHIPTONAME'], strpos($response_array['SHIPTONAME'], ' ')+1));
-        $ship_address = tep_db_prepare_input($response_array['SHIPTOSTREET']);
-        $ship_city = tep_db_prepare_input($response_array['SHIPTOCITY']);
-        $ship_zone = tep_db_prepare_input($response_array['SHIPTOSTATE']);
-        $ship_zone_id = 0;
-        $ship_postcode = tep_db_prepare_input($response_array['SHIPTOZIP']);
-        $ship_country = tep_db_prepare_input($response_array['SHIPTOCOUNTRYCODE']);
-        $ship_country_id = 0;
-        $ship_address_format_id = 1;
-
-        $country_query = tep_db_query("select countries_id, address_format_id from " . TABLE_COUNTRIES . " where countries_iso_code_2 = '" . tep_db_input($ship_country) . "' limit 1");
-        if (tep_db_num_rows($country_query)) {
-          $country = tep_db_fetch_array($country_query);
-
-          $ship_country_id = $country['countries_id'];
-          $ship_address_format_id = $country['address_format_id'];
-        }
-
-        if ($ship_country_id > 0) {
-          $zone_query = tep_db_query("select zone_id from " . TABLE_ZONES . " where zone_country_id = '" . (int)$ship_country_id . "' and (zone_name = '" . tep_db_input($ship_zone) . "' or zone_code = '" . tep_db_input($ship_zone) . "') limit 1");
-          if (tep_db_num_rows($zone_query)) {
-            $zone = tep_db_fetch_array($zone_query);
-
-            $ship_zone_id = $zone['zone_id'];
-          }
-        }
-
-        $check_query = tep_db_query("select address_book_id from " . TABLE_ADDRESS_BOOK . " where customers_id = '" . (int)$customer_id . "' and entry_firstname = '" . tep_db_input($ship_firstname) . "' and entry_lastname = '" . tep_db_input($ship_lastname) . "' and entry_street_address = '" . tep_db_input($ship_address) . "' and entry_postcode = '" . tep_db_input($ship_postcode) . "' and entry_city = '" . tep_db_input($ship_city) . "' and (entry_state = '" . tep_db_input($ship_zone) . "' or entry_zone_id = '" . (int)$ship_zone_id . "') and entry_country_id = '" . (int)$ship_country_id . "' limit 1");
-        if (tep_db_num_rows($check_query)) {
-          $check = tep_db_fetch_array($check_query);
-
-          $sendto = $check['address_book_id'];
-        } else {
-          $sql_data_array = array('customers_id' => $customer_id,
-                                  'entry_firstname' => $ship_firstname,
-                                  'entry_lastname' => $ship_lastname,
-                                  'entry_street_address' => $ship_address,
-                                  'entry_postcode' => $ship_postcode,
-                                  'entry_city' => $ship_city,
-                                  'entry_country_id' => $ship_country_id);
-
-          if (ACCOUNT_STATE == 'true') {
-            if ($ship_zone_id > 0) {
-              $sql_data_array['entry_zone_id'] = $ship_zone_id;
-              $sql_data_array['entry_state'] = '';
-            } else {
-              $sql_data_array['entry_zone_id'] = '0';
-              $sql_data_array['entry_state'] = $ship_zone;
-            }
-          }
-
-          tep_db_perform(TABLE_ADDRESS_BOOK, $sql_data_array);
-
-          $address_id = tep_db_insert_id();
-
-          $sendto = $address_id;
-
-          if ($customer_default_address_id < 1) {
-            tep_db_query("update " . TABLE_CUSTOMERS . " set customers_default_address_id = '" . (int)$address_id . "' where customers_id = '" . (int)$customer_id . "'");
-            $customer_default_address_id = $address_id;
-          }
-        }
-
-        if ($force_login == true) {
-          $customer_country_id = $ship_country_id;
-          $customer_zone_id = $ship_zone_id;
-          tep_session_register('customer_default_address_id');
-          tep_session_register('customer_country_id');
-          tep_session_register('customer_zone_id');
-
-          $billto = $sendto;
-        }
-
-//---------------------------------- End of Add on
-        
-        
-            include(DIR_WS_CLASSES . 'order.php');
-
-            if ($cart->get_content_type() != 'virtual') {
-
-                $country_iso_code_2 = tep_db_prepare_input($response_array['PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE']);
-                $zone_code = tep_db_prepare_input($response_array['PAYMENTREQUEST_0_SHIPTOSTATE']);
-
-                $country_query = tep_db_query("select countries_id, countries_name, countries_iso_code_2, countries_iso_code_3, address_format_id from " . TABLE_COUNTRIES . " where countries_iso_code_2 = '" . tep_db_input($country_iso_code_2) . "'");
-                $country = tep_db_fetch_array($country_query);
-
-                $zone_name = $response_array['PAYMENTREQUEST_0_SHIPTOSTATE'];
-                $zone_id = 0;
-
-                $zone_query = tep_db_query("select zone_id, zone_name from " . TABLE_ZONES . " where zone_country_id = '" . (int) $country['countries_id'] . "' and zone_code = '" . tep_db_input($zone_code) . "'");
-                if (tep_db_num_rows($zone_query)) {
-                    $zone = tep_db_fetch_array($zone_query);
-
-                    $zone_name = $zone['zone_name'];
-                    $zone_id = $zone['zone_id'];
-                }
-
-                $sendto = array('firstname' => substr($response_array['PAYMENTREQUEST_0_SHIPTONAME'], 0, strpos($response_array['PAYMENTREQUEST_0_SHIPTONAME'], ' ')),
-                    'lastname' => substr($response_array['PAYMENTREQUEST_0_SHIPTONAME'], strpos($response_array['PAYMENTREQUEST_0_SHIPTONAME'], ' ') + 1),
-                    'company' => '',
-                    'street_address' => $response_array['PAYMENTREQUEST_0_SHIPTOSTREET'],
-                    'suburb' => '',
-                    'postcode' => $response_array['PAYMENTREQUEST_0_SHIPTOZIP'],
-                    'city' => $response_array['PAYMENTREQUEST_0_SHIPTOCITY'],
-                    'zone_id' => $zone_id,
-                    'zone_name' => $zone_name,
-                    'country_id' => $country['countries_id'],
-                    'country_name' => $country['countries_name'],
-                    'country_iso_code_2' => $country['countries_iso_code_2'],
-                    'country_iso_code_3' => $country['countries_iso_code_3'],
-                    'address_format_id' => ($country['address_format_id'] > 0 ? $country['address_format_id'] : '1'));
-
-                $billto = $sendto;
-
-                $order = new order;
-
-                $total_weight = $cart->show_weight();
-                $total_count = $cart->count_contents();
-
-
-
-
-// load all enabled shipping modules
-                include(DIR_WS_CLASSES . 'shipping.php');
-                $shipping_modules = new shipping;
-
-                $free_shipping = false;
-
-                if (defined('MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING') && (MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING == 'true')) {
-                    $pass = false;
-
-                    switch (MODULE_ORDER_TOTAL_SHIPPING_DESTINATION) {
-                        case 'national':
-                            if ($order->delivery['country_id'] == STORE_COUNTRY) {
-                                $pass = true;
-                            }
-                            break;
-
-                        case 'international':
-                            if ($order->delivery['country_id'] != STORE_COUNTRY) {
-                                $pass = true;
-                            }
-                            break;
-
-                        case 'both':
-                            $pass = true;
-                            break;
-                    }
-
-                    if (($pass == true) && ($order->info['total'] >= MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING_OVER)) {
-                        $free_shipping = true;
-
-                        include(DIR_WS_LANGUAGES . $language . '/modules/order_total/ot_shipping.php');
-                    }
-                }
-
-                if (!tep_session_is_registered('shipping'))
-                    tep_session_register('shipping');
-                $shipping = false;
-
-                if ((tep_count_shipping_modules() > 0) || ($free_shipping == true)) {
-                    if ($free_shipping == true) {
-                        $shipping = 'free_free';
-                    } else {
-// get all available shipping quotes
-                        $quotes = $shipping_modules->quote();
-
-// select cheapest shipping method
-                        $shipping = $shipping_modules->cheapest();
-                        $shipping = $shipping['id'];
-                    }
-                }
-
-                if (strpos($shipping, '_')) {
-                    list($module, $method) = explode('_', $shipping);
-
-                    if (is_object($$module) || ($shipping == 'free_free')) {
-                        if ($shipping == 'free_free') {
-                            $quote[0]['methods'][0]['title'] = FREE_SHIPPING_TITLE;
-                            $quote[0]['methods'][0]['cost'] = '0';
-                        } else {
-                            $quote = $shipping_modules->quote($method, $module);
-                        }
-
-                        if (isset($quote['error'])) {
-                            tep_session_unregister('shipping');
-
-                            tep_redirect(tep_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
-                        } else {
-                            if ((isset($quote[0]['methods'][0]['title'])) && (isset($quote[0]['methods'][0]['cost']))) {
-                                $shipping = array('id' => $shipping,
-                                    'title' => (($free_shipping == true) ? $quote[0]['methods'][0]['title'] : $quote[0]['module'] . ' (' . $quote[0]['methods'][0]['title'] . ')'),
-                                    'cost' => $quote[0]['methods'][0]['cost']);
-                            }
-                        }
-                    }
-                }
-
-                if (!tep_session_is_registered('payment'))
-                    tep_session_register('payment');
-                $payment = $paypal_express->code;
-
-                if (!tep_session_is_registered('ppe_token'))
-                    tep_session_register('ppe_token');
-                $ppe_token = $response_array['TOKEN'];
-
-                if (!tep_session_is_registered('ppe_payerid'))
-                    tep_session_register('ppe_payerid');
-                $ppe_payerid = $response_array['PAYERID'];
-
-
-//  ------------- Change go to checkout_process.php 
-                //tep_redirect(tep_href_link(FILENAME_CHECKOUT_CONFIRMATION, '', 'SSL'));
-                tep_redirect(tep_href_link(FILENAME_CHECKOUT_PROCESS, '', 'SSL'));
-                
-            } else {
-                if (!tep_session_is_registered('shipping'))
-                    tep_session_register('shipping');
-                $shipping = false;
-
-                $sendto = false;
-
-                if (!tep_session_is_registered('payment'))
-                    tep_session_register('payment');
-                $payment = $paypal_express->code;
-
-                if (!tep_session_is_registered('ppe_token'))
-                    tep_session_register('ppe_token');
-                $ppe_token = $response_array['TOKEN'];
-
-                if (!tep_session_is_registered('ppe_payerid'))
-                    tep_session_register('ppe_payerid');
-                $ppe_payerid = $response_array['PAYERID'];
-
-                tep_redirect(tep_href_link(FILENAME_CHECKOUT_CONFIRMATION, '', 'SSL'));
-            }
-        } else {
-            tep_redirect(tep_href_link(FILENAME_SHOPPING_CART, 'error_message=' . stripslashes($response_array['L_LONGMESSAGE0']), 'SSL'));
-        }
-
-        break;
-
-
-
-
-    default:
-    
-        include(DIR_WS_CLASSES . 'order.php');
-        $order = new order;
-        
-//-------------- Add on for Shipping fee calculation -  copy from 2.3.3
-        $total_weight = $cart->show_weight();
-        $total_count = $cart->count_contents();
-
-        
-        $params['METHOD'] = 'SetExpressCheckout';
-        $params['PAYMENTREQUEST_0_PAYMENTACTION'] = ((MODULE_PAYMENT_PAYPAL_EXPRESS_TRANSACTION_METHOD == 'Sale') ? 'Sale' : 'Authorization');  
-        $params['RETURNURL'] = tep_href_link('mobile/lib/express_mobile.php', 'osC_Action=retrieve', 'SSL', true, false);
-        $params['CANCELURL'] = tep_href_link(FILENAME_SHOPPING_CART, '', 'SSL', true, false);
-        $params['PAYMENTREQUEST_0_CURRENCYCODE'] = $order->info['currency']; #AUD, CAD, EUR, GBP, JPY, USD
-
-        if ($order->content_type == 'virtual') {
-            $params['NOSHIPPING'] = '1';
-        }
-
-        $nProd = sizeof($order->products);
-        $subtotal = 0;
-        for ($i = 0; $i < $nProd; ++$i) {
-            $subtotal += $paypal_express->format_raw($order->products[$i]['final_price']) * $order->products[$i]['qty'];
-        }
-        $difst = 0;
-        if ($subtotal != $paypal_express->format_raw($order->info['subtotal'])) {
-            $difst = $paypal_express->format_raw($order->info['subtotal']) - $subtotal;
-        }
-
-        $order->products[$nProd - 1]['final_price'] += $difst;
-        for ($i = 0; $i < $nProd; ++$i) {
-            $params['L_PAYMENTREQUEST_0_NAME' . $i] = $order->products[$i]['name'];
-            $params['L_PAYMENTREQUEST_0_NUMBER' . $i] = $order->products[$i]['model'];
-            #$params['L_PAYMENTREQUEST_0_DESC' . $i] = $order->products[$i]['description'];
-            $params['L_PAYMENTREQUEST_0_AMT' . $i] = $paypal_express->format_raw($order->products[$i]['final_price']);
-            $params['L_PAYMENTREQUEST_0_QTY' . $i] = $order->products[$i]['qty'];
-        }
-
-
-//---------------------------------- Add on to calculate Shipping fee
+	ini_set('display_errors', 'off');
+
+	if(isset($_GET["main_page"]) && $_GET["main_page"] == "login")
+	{
+		unset($_SESSION['paypal_ec_token']);
+		header("HTTP/1.1 303 See Other");
+		header("Location: http://".$_SERVER[HTTP_HOST]."/ipn_main_handler.php?type=ec");
+	}
+
+	define('SKIP_SINGLE_PRODUCT_CATEGORIES', 'False');
+	$catalog_path = "";
+	$includes = array('includes/application_top.php', 'includes/database_tables.php', 'includes/modules/boxes/bm_categories.php');
+	if(file_exists(reset($includes)))
+	    foreach($includes as $file) require($file);
+	else //doesn't work
+	{
+	    $result = file_get_contents((@$_SERVER["HTTPS"] ? "https://" : "http://") . $_SERVER['HTTP_HOST']. "/ezifind.php");
+	    parse_str($result, $path);
+	    //echo $path['catalog_physical'];
+	    foreach($includes as $file) require($path['catalog_physical'].$file);
+	    $catalog_path = $path['catalog_physical'];
+
+	}
+
+	if(defined("PROJECT_VERSION"))
+	{
+			preg_match("/\d+\.?\d+/",PROJECT_VERSION, $matches);
+			if($matches)
+				define("PP_OSC_VERSION", (float)$matches[0]);
+			else
+				define("PP_OSC_VERSION", 2.3);
+	}
+	else
+		define("PP_OSC_VERSION", 2.3);
+
+
+
+	if(PP_OSC_VERSION<2.3)
+	{
+		define("IPN_HANDLER", preg_replace("/\/+$/","",DIR_WS_CATALOG) . "/ext/modules/payment/paypal/express_mobile.php");
+
+		if(!function_exists("tep_draw_button")) {
+			function tep_draw_button($title = null, $icon = null, $link = null, $priority = null, $params = null) {
+			static $button_counter = 1;
+
+			$types = array('submit', 'button', 'reset');
+
+			if ( !isset($params['type']) ) {
+			  $params['type'] = 'submit';
+			}
+
+			if ( !in_array($params['type'], $types) ) {
+			  $params['type'] = 'submit';
+			}
+
+			if ( ($params['type'] == 'submit') && isset($link) ) {
+			  $params['type'] = 'button';
+			}
+
+			if (!isset($priority)) {
+			  $priority = 'secondary';
+			}
+
+			$button = '<span class="tdbLink">';
+
+			if ( ($params['type'] == 'button') && isset($link) ) {
+			  $button .= '<a id="tdb' . $button_counter . '" href="' . $link . '"';
+
+			  if ( isset($params['newwindow']) ) {
+				$button .= ' target="_blank"';
+			  }
+			} else {
+			  $button .= '<button id="tdb' . $button_counter . '" type="' . tep_output_string($params['type']) . '"';
+			}
+
+			if ( isset($params['params']) ) {
+			  $button .= ' ' . $params['params'];
+			}
+
+			$button .= '>' . $title;
+
+			if ( ($params['type'] == 'button') && isset($link) ) {
+			  $button .= '</a>';
+			} else {
+			  $button .= '</button>';
+			}
+
+			$button .= '</span><script type="text/javascript">$("#tdb' . $button_counter . '").button(';
+
+			$args = array();
+
+			if ( isset($icon) ) {
+			  if ( !isset($params['iconpos']) ) {
+				$params['iconpos'] = 'left';
+			  }
+
+			  if ( $params['iconpos'] == 'left' ) {
+				$args[] = 'icons:{primary:"ui-icon-' . $icon . '"}';
+			  } else {
+				$args[] = 'icons:{secondary:"ui-icon-' . $icon . '"}';
+			  }
+			}
+
+			if (empty($title)) {
+			  $args[] = 'text:false';
+			}
+
+			if (!empty($args)) {
+			  $button .= '{' . implode(',', $args) . '}';
+			}
+
+			$button .= ').addClass("ui-priority-' . $priority . '").parent().removeClass("tdbLink");</script>';
+
+			$button_counter++;
+
+			return $button;
+		  }
+		}
+	}
+	else
+	{
+		define("IPN_HANDLER", "ipn_main_handler.php");
+	}
+
+	$defaults = array(
+		'languages_code' => 'fr',
+		'language' => 'french',
+		'languages_id' => 2
+	);
+	$_SESSION = array_merge($defaults, $_SESSION);
+	include("mobile/language_".$_SESSION['languages_code'] .".php");
+
+	$_SESSION['PaypalLanguages'] = array();
+	$_SESSION['PaypalLanguages']['language'] = $_SESSION['languages_code'] . "_" . strtoupper($_SESSION['languages_code']);
+	$_SESSION['PaypalLanguages']['checkoutWithPaypal'] = "mobile/images/" . $_SESSION['PaypalLanguages']['language'] . "/_buttons/@2x/normal/CO_" . $_SESSION['PaypalLanguages']['language'] . "_orange_19x24@2x.png";
+	$_SESSION['PaypalLanguages']['checkoutWithPaypalDown'] = "mobile/images/" . $_SESSION['PaypalLanguages']['language'] . "/_buttons/@2x/normal/CO_" . $_SESSION['PaypalLanguages']['language'] . "_orange_19x24@2x.png";
+	$_SESSION['paypal_ec_markflow'] = 1;
+
+	global $bm_categories, $tree;
+	$bm_categories = new bm_categories();
+	$bm_categories->getData();
+	global $products;
+
+function requestURI(){
+   
+  $requestURI = $_SERVER['REQUEST_URI']; 
   
-	      // load all enabled shipping modules
-        include(DIR_WS_CLASSES . 'shipping.php');
-        $shipping_modules = new shipping;
-
-                $free_shipping = false;
-
-                if (defined('MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING') && (MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING == 'true')) {
-                    $pass = false;
-
-                    switch (MODULE_ORDER_TOTAL_SHIPPING_DESTINATION) {
-                        case 'national':
-                            if ($order->delivery['country_id'] == STORE_COUNTRY) {
-                                $pass = true;
-                            }
-                            break;
-
-                        case 'international':
-                            if ($order->delivery['country_id'] != STORE_COUNTRY) {
-                                $pass = true;
-                            }
-                            break;
-
-                        case 'both':
-                            $pass = true;
-                            break;
-                    }
-
-                    if (($pass == true) && ($order->info['total'] >= MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING_OVER)) {
-                        $free_shipping = true;
-
-                        include(DIR_WS_LANGUAGES . $language . '/modules/order_total/ot_shipping.php');
-                    }
-                }
-		
-		  
-                if (!tep_session_is_registered('shipping'))
-                	tep_session_register('shipping');
-
-                $shipping = false;
-
-                if ((tep_count_shipping_modules() > 0) || ($free_shipping == true)) {
-                    if ($free_shipping == true) {
-                        $shipping = 'free_free';
-                    } else {
-			                   // get all available shipping quotes
-                        $quotes = $shipping_modules->quote();
-
-			                   // select cheapest shipping method
-                        $shipping = $shipping_modules->cheapest();
-                        $shipping = $shipping['id'];
-                    }
-                }
-
-                if (strpos($shipping, '_')) {
-                    list($module, $method) = explode('_', $shipping);
-
-                    if (is_object($$module) || ($shipping == 'free_free')) {
-                        if ($shipping == 'free_free') {
-                            $quote[0]['methods'][0]['title'] = FREE_SHIPPING_TITLE;
-                            $quote[0]['methods'][0]['cost'] = '0';
-                        } else {
-                            $quote = $shipping_modules->quote($method, $module);
-                        }
-
-                        if (isset($quote['error'])) {
-                            tep_session_unregister('shipping');
-
-                            tep_redirect(tep_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
-                        } else {
-                            if ((isset($quote[0]['methods'][0]['title'])) && (isset($quote[0]['methods'][0]['cost']))) {
-                                $shipping = array('id' => $shipping,
-                                    'title' => (($free_shipping == true) ? $quote[0]['methods'][0]['title'] : $quote[0]['module'] . ' (' . $quote[0]['methods'][0]['title'] . ')'),
-                                    'cost' => $quote[0]['methods'][0]['cost']);
-                            }
-                        }
-                    }
-                }
-                
-//------------------------------------End of Add one Shipping
-                
-
-        require_once(DIR_WS_CLASSES . 'order_total.php');
-        $order_total_modules = new order_total;
-
-        $order_totals = $order_total_modules->process();
-
-        $order_details = array();
-        $order_details['subtotal'] = 0;
-        $order_details['shippingcost'] = 0;
-        $order_details['tax'] = 0;
-        $order_details['discount'] = 0;
-        $order_details['handling'] = 0;
-        $order_details['total'] = 0;
-
-        foreach ($order_totals as $order_total) {
-            if ($order_total['code'] == 'ot_subtotal') {
-                $order_details['subtotal'] += $order_total['value'];
-            } elseif ($order_total['code'] == 'ot_shipping') {
-                $order_details['shippingcost'] += $order_total['value'];
-            } elseif ($order_total['code'] == 'ot_tax') {
-                $order_details['tax'] += $order_total['value'];
-            } elseif ($order_total['code'] == 'ot_total') {
-                $order_details['total'] += $order_total['value'];
-            } elseif ($order_total['code'] == 'ot_redemptions' || $order_total['code'] == 'ot_gv' || $order_total['code'] == 'ot_coupon') {
-                $order_details['discount'] += $order_total['value'];
-            } elseif ($order_total['code'] == 'ot_insurance') {
-                $order_details['handling'] += $order_total['value'];
-            } else {
-                if ($order_total['value'] > 0) {
-                    $order_details['handling'] += $order_total['value'];
-                } else {
-                    $order_details['discount'] += $order_total['value'];
-                }
-            }
-        }
-
-
-// ------------ yong how  - to update shipping fee
-	      if($shipping['cost'] > 0 && $order_details['shippingcost'] == 0){
-		        $order_details['shippingcost'] = $shipping['cost'];
-		        $order_details['total'] += $shipping['cost'];
-	      }
-        
-        $params['PAYMENTREQUEST_0_ITEMAMT'] = $paypal_express->format_raw($order_details['subtotal']);
-        $params['PAYMENTREQUEST_0_TAXAMT'] = $paypal_express->format_raw($order_details['tax']);
-        $params['PAYMENTREQUEST_0_SHIPPINGAMT'] = $paypal_express->format_raw($order_details['shippingcost']);
-        $params['PAYMENTREQUEST_0_SHIPDISCAMT'] = $paypal_express->format_raw($order_details['discount']);
-        $params['PAYMENTREQUEST_0_HANDLINGAMT'] = $paypal_express->format_raw($order_details['handling']);
-        $params['PAYMENTREQUEST_0_AMT'] = $paypal_express->format_raw($order_details['total']);
-
-        $post_string = '';
-
-        foreach ($params as $key => $value) {
-            $post_string .= $key . '=' . urlencode(trim($value)) . '&';
-        }
-
-        $post_string = substr($post_string, 0, -1);        
-        //echo $post_string; exit();
-
-        $response = $paypal_express->sendTransactionToGateway($api_url, $post_string);
-        $response_array = array();
-        parse_str($response, $response_array);
-
-
-// ------------- Add useaction=commit
-
-        if (($response_array['ACK'] == 'Success') || ($response_array['ACK'] == 'SuccessWithWarning')) {
-            tep_redirect($paypal_url . '&useraction=commit&token=' . $response_array['TOKEN']);
-        } else {
-            tep_redirect(tep_href_link(FILENAME_SHOPPING_CART, 'error_message=' . stripslashes($response_array['L_LONGMESSAGE0']), 'SSL'));
-        }
-
-        break;
+  $catalogFolder = DIR_WS_CATALOG;
+  $catalogFolder = preg_replace("/\/+$/", "", $catalogFolder);
+  $subject = preg_replace("/".preg_quote($catalogFolder, "/")."/", "", $requestURI);
+  return array(
+      $requestURI,
+      $catalogFolder,
+      $subject
+  );
 }
 
-tep_redirect(tep_href_link(FILENAME_SHOPPING_CART, '', 'SSL'));
+function matchhome() {
+	global $bm_categories, $tree, $currency;
 
-require(DIR_WS_INCLUDES . 'application_bottom.php');
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/^\/(?:$|\?)/';
+	preg_match($pattern, $subject, $matches);
+	if ($matches) {
+		return true;
+	}
+	return false;
+}
+if(matchhome()) {
+  	$select_column_list = 'pd.products_name, p.products_image, ';
+        $listing_sql = "select " . $select_column_list . " p.products_id, p.manufacturers_id, p.products_price, p.products_tax_class_id, IF(s.status, s.specials_new_products_price, NULL) as specials_new_products_price, IF(s.status, s.specials_new_products_price, p.products_price) as final_price from " . TABLE_PRODUCTS_DESCRIPTION . " pd, " . TABLE_PRODUCTS . " p left join " . TABLE_MANUFACTURERS . " m on p.manufacturers_id = m.manufacturers_id left join " . TABLE_SPECIALS . " s on p.products_id = s.products_id, " . TABLE_PRODUCTS_TO_CATEGORIES . " p2c where p.products_status = '1' and p.products_id = p2c.products_id and pd.products_id = p2c.products_id and pd.language_id = '" . (int)$languages_id . "'";
+        
+        $categories_query = tep_db_query("select count(*) as total from " . TABLE_CATEGORIES . " c, " . TABLE_CATEGORIES_DESCRIPTION . " cd where c.parent_id = '" . (int)$category_links[$i] . "' and c.categories_id = cd.categories_id and cd.language_id = '" . (int)$languages_id . "'");
+        $categories = tep_db_fetch_array($categories_query);
+        
+        
+	global $listing_sql, $db, $listing_query, $categories;
+	include 'mobile/index.php';
+	die();
+}
+ 
+function matchcart() {
+	global $bm_categories, $tree, $cart, $cartShowTotal, $currency, $currencies;
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/(index.php\?main_page=shopping_cart|shopping_cart.php)/';
+	preg_match($pattern, $subject, $matches);
+	return (boolean) $matches;
+}
+if(matchcart())
+{
+    include 'mobile/cart.php';
+    die();	
+}
+
+function matchcheckoutsuccess(){
+	global $zv_orders_id, $orders_id, $orders, $define_page, $currency;
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/checkout_success.php/';
+	preg_match($pattern, $subject, $matches);
+	return (boolean) $matches; 
+}
+if(matchcheckoutsuccess())
+{
+	require(DIR_WS_CLASSES . 'order.php');
+	include 'mobile/checkoutsuccess.php';
+	die();
+}
+function matchminicart() 
+{
+	global $cart, $cartShowTotal, $currency, $currencies;
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/minicart.php/';
+	preg_match($pattern, $subject, $matches);
+	return (boolean) $matches;
+}
+if(matchminicart())
+{
+	include 'mobile/minicart.php';
+	die();
+}
+
+function matchcookies() {
+	global $cart, $cartShowTotal, $currency;
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/cookies.php/';
+	preg_match($pattern, $subject, $matches);
+	return (boolean) $matches;
+}
+if(matchcookies())
+{
+	include 'mobile/cookies.php';
+	die();
+}
+
+function matchminicartview() {
+	global $cart, $cartShowTotal, $currency, $currencies;
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/minicartview.php/';
+	preg_match($pattern, $subject, $matches);
+	return (boolean)$matches;
+}
+if(matchminicartview())
+{
+	include 'mobile/minicartview.php';
+	die();
+}
+
+function matchcategory(){
+	global $currency;
+
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/category/';
+	preg_match($pattern, $subject, $matches);
+	if ($matches) {
+		return true;
+	}
+
+	return false;
+}
+if(matchcategory())
+{
+  	$select_column_list = 'pd.products_name, p.products_image, ';
+    $listing_sql = "select " . $select_column_list . " p.products_id, p.manufacturers_id, p.products_price, p.products_tax_class_id, IF(s.status, s.specials_new_products_price, NULL) as specials_new_products_price, IF(s.status, s.specials_new_products_price, p.products_price) as final_price from " . TABLE_PRODUCTS_DESCRIPTION . " pd, " . TABLE_PRODUCTS . " p left join " . TABLE_MANUFACTURERS . " m on p.manufacturers_id = m.manufacturers_id left join " . TABLE_SPECIALS . " s on p.products_id = s.products_id, " . TABLE_PRODUCTS_TO_CATEGORIES . " p2c where p.products_status = '1' and p.products_id = p2c.products_id and pd.products_id = p2c.products_id and pd.language_id = '" . (int)$languages_id . "' and p2c.categories_id = '" . (int)$current_category_id . "'";
+    $categories_query = tep_db_query("select count(*) as total from " . TABLE_CATEGORIES . " c, " . TABLE_CATEGORIES_DESCRIPTION . " cd where c.parent_id = '" . (int)$category_links[$i] . "' and c.categories_id = cd.categories_id and cd.language_id = '" . (int)$languages_id . "'");
+    $categories = tep_db_fetch_array($categories_query);
+	global $listing_sql, $db, $listing_query, $categories;
+	include 'mobile/category.php';
+	die();
+}
+
+function matchproduct() {
+	global $sql, $currency, $currencies;
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/^\/prod\d+\.htm(?:$|\?)/';
+	preg_match($pattern, $subject, $matches);
+	if ($matches) {
+		return true;
+	}
+
+	return false;
+}
+if(matchproduct()) {
+	include 'mobile/product.php';
+	die();
+}
+
+function matchgallery() {
+	global $currency;
+
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/gallery/';
+	preg_match($pattern, $subject, $matches);
+	if ($matches) {
+		return true;
+	}
+
+	return false;
+}
+
+if(matchgallery()) {
+	$select_column_list = 'pd.products_name, p.products_image, ';
+	//require('includes/index_filters/default_filter.php');
+	include 'mobile/gallery.php';
+	die();
+}
+
+function matchsearch() {
+	global $currency, $currencies;
+
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/(^\/search\/?(?:$|\?)|^\/advanced_search_result.php)/';
+	preg_match($pattern, $subject, $matches);
+	return (boolean) $matches;
+}
+if(matchsearch())
+{
+	    $select_column_list = 'pd.products_name, p.products_image, ';
+	    $listing_sql = "select " . $select_column_list . " p.products_id, p.manufacturers_id, p.products_price, p.products_tax_class_id, IF(s.status, s.specials_new_products_price, NULL) as specials_new_products_price, IF(s.status, s.specials_new_products_price, p.products_price) as final_price from " . TABLE_PRODUCTS_DESCRIPTION . " pd, " . TABLE_PRODUCTS . " p left join " . TABLE_MANUFACTURERS . " m on p.manufacturers_id = m.manufacturers_id left join " . TABLE_SPECIALS . " s on p.products_id = s.products_id, " . TABLE_PRODUCTS_TO_CATEGORIES . " p2c where p.products_status = '1' and p.products_id = p2c.products_id and pd.products_id = p2c.products_id and pd.language_id = '" . 1 . "' and pd.products_name like '%" . $_GET['keywords'] ."%'";
+	    include 'mobile/search.php';
+}
+ 
 ?>
