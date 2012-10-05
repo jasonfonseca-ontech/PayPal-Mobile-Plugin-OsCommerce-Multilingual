@@ -61,9 +61,9 @@ for ($i=0;$i<sizeof($products);$i++) {
 <li class="ui-li ui-li-static ui-body-c" style="text-align: center; padding: 0; padding-top: 5px; padding-bottom: 5px;">
 	<div class="ui-footer-fixed">
 
-	<a rel="external" href="./ext/modules/payment/paypal/express.php">
-		    <img id="paypalbutton" src="./mobile/images/btn_checkout_278x43.png" />
-		    <img style="display:none;" src="./mobile/images/btn_checkout_278x43down.png" />
+	<a rel="external" href="<?php get_expressURL()  ?>">
+		    <img id="paypalbutton" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypal'] ?>" />
+		    <img style="display:none;" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypalDown'] ?>" />
     </a>
 	</div>
 </li>

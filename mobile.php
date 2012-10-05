@@ -1,7 +1,7 @@
 <?php
 
 	ini_set('display_errors', 'off');
-
+	define("SHIPPING_SELECTOR", "off"); //on / off
 	if(isset($_GET["main_page"]) && $_GET["main_page"] == "login")
 	{
 		unset($_SESSION['paypal_ec_token']);
@@ -11,18 +11,9 @@
 
 	define('SKIP_SINGLE_PRODUCT_CATEGORIES', 'False');
 	$catalog_path = "";
-	$includes = array('includes/application_top.php', 'includes/database_tables.php', 'includes/modules/boxes/bm_categories.php');
-	if(file_exists(reset($includes)))
-	    foreach($includes as $file) require($file);
-	else //doesn't work
-	{
-	    $result = file_get_contents((@$_SERVER["HTTPS"] ? "https://" : "http://") . $_SERVER['HTTP_HOST']. "/ezifind.php");
-	    parse_str($result, $path);
-	    //echo $path['catalog_physical'];
-	    foreach($includes as $file) require($path['catalog_physical'].$file);
-	    $catalog_path = $path['catalog_physical'];
-
-	}
+	require('includes/application_top.php');
+	require('includes/database_tables.php');
+	tep_session_unregister('navigation');
 
 	if(defined("PROJECT_VERSION"))
 	{
@@ -35,12 +26,23 @@
 	else
 		define("PP_OSC_VERSION", 2.3);
 
-
-
 	if(PP_OSC_VERSION<2.3)
 	{
 		define("IPN_HANDLER", preg_replace("/\/+$/","",DIR_WS_CATALOG) . "/ext/modules/payment/paypal/express_mobile.php");
 
+		// include boxes template  
+		require('mobile/lib/boxes/bm_categories.php');
+      
+		// to remove product function in cart page
+		if($HTTP_GET_VARS['action'] == 'remove_product') 
+		{
+			if (isset($HTTP_GET_VARS['products_id'])) 
+			{
+				$cart->remove($HTTP_GET_VARS['products_id']);
+			}
+			tep_redirect(tep_href_link($goto, tep_get_all_get_params($parameters)));
+		}
+		
 		if(!function_exists("tep_draw_button")) {
 			function tep_draw_button($title = null, $icon = null, $link = null, $priority = null, $params = null) {
 			static $button_counter = 1;
@@ -119,23 +121,37 @@
 		  }
 		}
 	}
-	else
+	else //oscommerce 2.3+
 	{
+		require('includes/modules/boxes/bm_categories.php');
 		define("IPN_HANDLER", "ipn_main_handler.php");
 	}
 
+	function get_expressURL(){
+	  if(PP_OSC_VERSION<2.3) 
+		  echo 'mobile/lib/express_mobile.php';
+	  else
+		  echo 'ext/modules/payment/paypal/express.php';
+	}
+	
 	$defaults = array(
-		'languages_code' => 'fr',
-		'language' => 'french',
-		'languages_id' => 2
+		'languages_code' => 'en',
+		'language' => 'english',
+		'languages_id' => 1
 	);
 	$_SESSION = array_merge($defaults, $_SESSION);
 	include("mobile/language_".$_SESSION['languages_code'] .".php");
 
-	$_SESSION['PaypalLanguages'] = array();
-	$_SESSION['PaypalLanguages']['language'] = $_SESSION['languages_code'] . "_" . strtoupper($_SESSION['languages_code']);
-	$_SESSION['PaypalLanguages']['checkoutWithPaypal'] = "mobile/images/" . $_SESSION['PaypalLanguages']['language'] . "/_buttons/@2x/normal/CO_" . $_SESSION['PaypalLanguages']['language'] . "_orange_19x24@2x.png";
-	$_SESSION['PaypalLanguages']['checkoutWithPaypalDown'] = "mobile/images/" . $_SESSION['PaypalLanguages']['language'] . "/_buttons/@2x/normal/CO_" . $_SESSION['PaypalLanguages']['language'] . "_orange_19x24@2x.png";
+	function get_paypalLanguages(){ 
+		$l = array();
+		$l['language'] = $_SESSION['languages_code'] . "_" . strtoupper($_SESSION['languages_code']);
+		
+		$l['checkoutWithPaypal'] = "mobile/images/" . $l['language'] . "/_buttons/@2x/normal/CO_".$l['language']."_orange_119x24_@2x.png";
+		$l['checkoutWithPaypalDown'] = "mobile/images/" . $l['language'] . "/_buttons/@2x/pressed/CO_".$l['language']."_orange_119x24_@2x_P.png";
+		
+		return $l;
+	}
+	$_SESSION['PaypalLanguages'] = get_paypalLanguages();
 	$_SESSION['paypal_ec_markflow'] = 1;
 
 	global $bm_categories, $tree;
@@ -320,5 +336,23 @@ if(matchsearch())
 	    $listing_sql = "select " . $select_column_list . " p.products_id, p.manufacturers_id, p.products_price, p.products_tax_class_id, IF(s.status, s.specials_new_products_price, NULL) as specials_new_products_price, IF(s.status, s.specials_new_products_price, p.products_price) as final_price from " . TABLE_PRODUCTS_DESCRIPTION . " pd, " . TABLE_PRODUCTS . " p left join " . TABLE_MANUFACTURERS . " m on p.manufacturers_id = m.manufacturers_id left join " . TABLE_SPECIALS . " s on p.products_id = s.products_id, " . TABLE_PRODUCTS_TO_CATEGORIES . " p2c where p.products_status = '1' and p.products_id = p2c.products_id and pd.products_id = p2c.products_id and pd.language_id = '" . 1 . "' and pd.products_name like '%" . $_GET['keywords'] ."%'";
 	    include 'mobile/search.php';
 }
- 
+
+function matchcheckoutconfirmation(){
+	
+	global $zv_orders_id, $orders_id, $orders, $define_page, $currency, $tree;
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/checkout_confirmation.php/';
+	preg_match($pattern, $subject, $matches);
+	if ($matches) return true;
+	return false;
+}
+if(matchcheckoutconfirmation())
+{
+	if(SHIPPING_SELECTOR == "on")
+		include 'mobile/checkoutconfirmation.php';
+	else
+		header("Location: " . 'http'.(empty($_SERVER['HTTPS'])?'':'s').'://'.$_SERVER['SERVER_NAME'].str_replace("checkout_confirmation", "checkout_process", $_SERVER['REQUEST_URI']) );
+	
+}
+
 ?>

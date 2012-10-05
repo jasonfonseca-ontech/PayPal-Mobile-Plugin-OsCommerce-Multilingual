@@ -12,9 +12,9 @@
 	</span>
 
 	<div id="PayPalExpressCheckout">
-	<a rel="external" href="./ext/modules/payment/paypal/express.php">
-		    <img id="paypalbutton" src="./mobile/images/btn_checkout_278x43.png" />
-		    <img style="display:none;" src="./mobile/images/btn_checkout_278x43down.png" />
+	<a rel="external" href="<?php get_expressURL()  ?>">
+		    <img id="paypalbutton" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypal'] ?>" />
+		    <img style="display:none;" src="<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypalDown'] ?>" />
     </a>
     </div>
 	

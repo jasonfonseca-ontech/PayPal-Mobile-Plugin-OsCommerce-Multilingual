@@ -4,13 +4,22 @@
     <meta charset="UTF-8">
     <link rel="search" type="application/opensearchdescription+xml" href="osd.xml" title="<?php echo $_['Search']; ?>"/>
 
-<script>
-document.cookie = "checkit=checkit;";
-if(!/checkit/i.test(document.cookie))
-{
-	window.location = "/cookies.php";
-}
-</script>
+	<script type="text/javascript">
+		document.cookie = "checkit=checkit;";
+		if(!/checkit/i.test(document.cookie))
+		{
+			window.location = "/cookies.php";
+		}
+
+		var language = { 
+			code: "<?php echo $_SESSION['languages_code'] ?>",
+			id: "<?php echo $_SESSION['languages_id'] ?>",
+			language: "<?php echo $_SESSION['language'] ?>",
+			paypal: "<?php echo $_SESSION['PaypalLanguages']['language'] ?>",
+		};
+		language.checkoutWithPaypal = "<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypal'] ?>";
+		language.checkoutWithPaypalDown = "<?php echo $_SESSION['PaypalLanguages']['checkoutWithPaypalDown'] ?>";
+	</script>
 
 	<script src="mobile/js/jquery-1.6.2.min.js"></script>
 	<script src="mobile/js/jquery.mobile-1.0b3.min.js"></script>
