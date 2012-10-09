@@ -42,7 +42,7 @@
     }
 echo "</ol>";
 
-  echo TEXT_SEE_ORDERS . '<br /><br />' . TEXT_CONTACT_STORE_OWNER;
+ 
 ?>
 
 
