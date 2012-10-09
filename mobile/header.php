@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
     <title><?php echo $_['TITLE']; ?></title>
-    <meta charset="UTF-8">
+    <?php if($_SESSION['languages_code']!="en") : ?><meta charset="UTF-8"><?php endif; ?>
     <link rel="search" type="application/opensearchdescription+xml" href="osd.xml" title="<?php echo $_['Search']; ?>"/>
 
 	<script type="text/javascript">
