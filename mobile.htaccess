@@ -11,5 +11,6 @@ RewriteCond %{REQUEST_URI} 		!/ext/modules/payment/paypal/express.php
 RewriteCond %{REQUEST_URI}   	!/ext/modules/payment/paypal/express_mobile.php
 RewriteCond %{HTTP_USER_AGENT} iPad|iPod|iPhone|Android|\s+Mobile 
 RewriteCond %{HTTP_USER_AGENT} !iPad 
-RewriteRule .* mobile.php [L] 
+
+RewriteRule .* /mobile.php [L] 
 # izemerchant 
