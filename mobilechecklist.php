@@ -48,6 +48,7 @@ $OK_STATUS = '<font color="#00a651"><b>OK</b></font>';
 i {color: #666666; font-size: 12px;}
 hr {display: none; font-size: 12px;}
 .tabd {border: 1px #eeeeee solid;}
+.support{font-family: sans-serif;}
 </style>
 
 </head>
@@ -56,7 +57,9 @@ hr {display: none; font-size: 12px;}
 <table width="50%" cellspacing="0" cellpadding="4" class='tabd'>
   <tr>
     <td height="44"><h1>Server Infomation</h1></td>
-	<td><a href="/" onclick="document.cookie='miabdebug=1';document.location.href=document.location.href;">Click To Preview Mobile Plugin</a></td>
+	  <td style="background-color:#cce3f8;">
+		<a href="/" onclick="document.cookie='miabdebug=1';document.location.href=document.location.href;">Click To Preview Mobile Plugin</a>
+	</td>
   </tr>
   
   <tr class='v'>
@@ -93,8 +96,13 @@ hr {display: none; font-size: 12px;}
   </tr>
 </table>
 
+<div class="support">
+	<h3>For any assistance or support, please e-mail to 
+		<a href="mailto:DL-PP-MIAB-SUPPORT@ebay.com">DL-PP-MIAB-SUPPORT@ebay.com</a>
+	</h3>
+</div>
 
-<br><br><br>
+<br><br>
 <table width="80%" cellspacing="0" cellpadding="4" class='tabd'>
   <tr>
     <td colspan="3" height="44"><h1>Shopping cart capabilities</h1></td>
@@ -134,14 +142,14 @@ $isShoppingCartValid = false;
   $status='<font color="red">Failed</font>';
   
   if(preg_match('/osCommerce/',$cart_version) &&(preg_match('/2.2/',$cart_version) || preg_match('/2.3/',$cart_version))) {
-      $support='<font color="#00a651">2.2 and 2.3 are supported</font>';  
-      $status='<font color="#00a651">OK</font>';
+      $support='<font color="#00a651"><b>2.2 and 2.3 are supported</b></font>';  
+      $status='<font color="#00a651"><b>OK</b></font>';
 	  tep_session_unregister('navigation');
 	  $isShoppingCartValid = true;
   }
   if(preg_match('/Zen\sCart/',$cart_version) &&(preg_match('/1.3.9/',$cart_version) || preg_match('/1.3.8/',$cart_version)|| preg_match('/1.5.0/',$cart_version)|| preg_match('/1.5.1/',$cart_version)))  {
-      $support='<font color="#00a651">1.3.8, 1.3.9, 1.5.0 & 1.5.1 are supported</font>'; 
-      $status='<font color="#00a651">OK</font>';
+      $support='<font color="#00a651"><b>1.3.8, 1.3.9, 1.5.0 & 1.5.1 are supported</b></font>'; 
+      $status='<font color="#00a651"><b>OK</b></font>';
 	  $isShoppingCartValid = true;
   }
   
@@ -332,7 +340,7 @@ if($isShoppingCartValid)
 	//Check Mobile Plugin installed?
 	//----------------------------------
 
-			$mobileplugin = '<font color="#00a651">Doesn\'t exist</font>';
+			$mobileplugin = '<font color="#00a651"><b>Doesn\'t exist</b></font>';
 			$filename='mobile.php'; 
 			$dirname = 'mobile';
 			
@@ -350,7 +358,7 @@ if($isShoppingCartValid)
 		  <td>
 			<?php
 				if($mobileplugin == 'Yes'){
-					echo '<font color="orange">Warning</font>';
+					echo '<font color="orange"><b>Warning</b></font>';
 				} else {
 					echo $OK_STATUS;
 				}

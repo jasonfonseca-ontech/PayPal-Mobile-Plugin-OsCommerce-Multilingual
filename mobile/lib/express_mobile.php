@@ -15,7 +15,7 @@
 
 chdir('../../');
 require('includes/application_top.php');
-
+require('include/classes/http_client.php');
 // if the customer is not logged on, redirect them to the login page
 /*
 if (!tep_session_is_registered('customer_id')) {
@@ -449,7 +449,8 @@ switch ($_GET['osC_Action']) {
 
 
 //---------------------------------- Add on to calculate Shipping fee
-  
+	if(SHIPPING_SELECTOR == "off")
+	{
 	      // load all enabled shipping modules
         include(DIR_WS_CLASSES . 'shipping.php');
         $shipping_modules = new shipping;
@@ -527,7 +528,7 @@ switch ($_GET['osC_Action']) {
                         }
                     }
                 }
-                
+	}
 //------------------------------------End of Add one Shipping
                 
 
