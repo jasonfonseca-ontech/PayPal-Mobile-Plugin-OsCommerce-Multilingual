@@ -151,7 +151,7 @@
 		$l['language'] = $_SESSION['languages_code'] . "_" . strtoupper($_SESSION['languages_code']);
 		
 		$l['checkoutWithPaypal'] = "mobile/images/" . $l['language'] . "/" . $l['language'].".png";
-		$l['checkoutWithPaypalDown'] = "mobile/images/" . $l['language'] "/" . $l['language']."_pressed.png";
+		$l['checkoutWithPaypalDown'] = "mobile/images/" . $l['language']. "/" . $l['language']."_pressed.png";
 		
 		return $l;
 	}
