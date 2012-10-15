@@ -1,7 +1,7 @@
 <?php
 
 	ini_set('display_errors', 'off');
-	define("SHIPPING_SELECTOR", "off"); //on / off
+	
 	if(isset($_GET["main_page"]) && $_GET["main_page"] == "login")
 	{
 		unset($_SESSION['paypal_ec_token']);
@@ -12,6 +12,7 @@
 	define('SKIP_SINGLE_PRODUCT_CATEGORIES', 'False');
 	$catalog_path = "";
 	require('includes/application_top.php');
+	require('includes/classes/http_client.php');
 	require('includes/database_tables.php');
 	tep_session_unregister('navigation');
 
@@ -29,6 +30,8 @@
 	if(PP_OSC_VERSION<2.3)
 	{
 		define("IPN_HANDLER", preg_replace("/\/+$/","",DIR_WS_CATALOG) . "/ext/modules/payment/paypal/express_mobile.php");
+		define("SHIPPING_SELECTOR", "on"); //on / off
+
 
 		// include boxes template  
 		require('mobile/lib/boxes/bm_categories.php');
@@ -123,6 +126,7 @@
 	}
 	else //oscommerce 2.3+
 	{
+		define("SHIPPING_SELECTOR", "off"); //on / off
 		require('includes/modules/boxes/bm_categories.php');
 		define("IPN_HANDLER", "ipn_main_handler.php");
 	}
@@ -146,8 +150,8 @@
 		$l = array();
 		$l['language'] = $_SESSION['languages_code'] . "_" . strtoupper($_SESSION['languages_code']);
 		
-		$l['checkoutWithPaypal'] = "mobile/images/" . $l['language'] . "/_buttons/@2x/normal/CO_".$l['language']."_orange_119x24_@2x.png";
-		$l['checkoutWithPaypalDown'] = "mobile/images/" . $l['language'] . "/_buttons/@2x/pressed/CO_".$l['language']."_orange_119x24_@2x_P.png";
+		$l['checkoutWithPaypal'] = "mobile/images/" . $l['language'] . "/" . $l['language'].".png";
+		$l['checkoutWithPaypalDown'] = "mobile/images/" . $l['language'] "/" . $l['language']."_pressed.png";
 		
 		return $l;
 	}
@@ -349,10 +353,32 @@ function matchcheckoutconfirmation(){
 if(matchcheckoutconfirmation())
 {
 	if(SHIPPING_SELECTOR == "on")
-		include 'mobile/checkoutconfirmation.php';
+		include 'mobile/checkoutshipping.php';
 	else
 		header("Location: " . 'http'.(empty($_SERVER['HTTPS'])?'':'s').'://'.$_SERVER['SERVER_NAME'].str_replace("checkout_confirmation", "checkout_process", $_SERVER['REQUEST_URI']) );
 	
 }
+
+// not match above  - go to cart
+function non_match_page() {
+
+	global $bm_categories, $tree, $cart, $cartShowTotal, $currency, $currencies;
+
+	list($requestURI, $catalogFolder, $subject) = requestURI();
+	$pattern = '/(index.php\?main_page=shopping_cart|shopping_cart.php)/';
+  
+  // error log
+	error_log('version='.PROJECT_VERSION.', requestURI='.$requestURI, $catalogFolder, $subject);
+  
+  preg_match($pattern, $subject, $matches); 
+
+	return (boolean) $matches;
+	
+}
+if (!non_match_page()) {  	
+	include 'mobile/cart.php';
+	die();	
+}
+ 
 
 ?>
