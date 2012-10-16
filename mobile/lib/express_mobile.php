@@ -12,7 +12,7 @@
  */
 
 //chdir('../../../../');
-
+define("SHIPPING_SELECTOR", "on");
 chdir('../../');
 require('includes/application_top.php');
 require('includes/classes/http_client.php');
@@ -597,8 +597,11 @@ switch ($_GET['osC_Action']) {
 
 // ------------- Add useaction=commit
 
-        if (($response_array['ACK'] == 'Success') || ($response_array['ACK'] == 'SuccessWithWarning')) {
-            tep_redirect($paypal_url . '&useraction=commit&token=' . $response_array['TOKEN']);
+        if (($response_array['ACK'] == 'Success') || ($response_array['ACK'] == 'SuccessWithWarning')) 
+        {
+            $commit = "&useraction=commit";
+            if(SHIPPING_SELECTOR=="on") $commit='';
+            tep_redirect($paypal_url . $commit .'&token=' . $response_array['TOKEN']);
         } else {
             tep_redirect(tep_href_link(FILENAME_SHOPPING_CART, 'error_message=' . stripslashes($response_array['L_LONGMESSAGE0']), 'SSL'));
         }
