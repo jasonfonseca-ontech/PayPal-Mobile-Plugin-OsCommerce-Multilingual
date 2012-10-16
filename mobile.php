@@ -362,29 +362,27 @@ if(matchcheckoutconfirmation())
 		include 'mobile/checkoutshipping.php';
 	else
 		header("Location: " . 'http'.(empty($_SERVER['HTTPS'])?'':'s').'://'.$_SERVER['SERVER_NAME'].str_replace("checkout_confirmation", "checkout_process", $_SERVER['REQUEST_URI']) );
-	
+        die();
 }
 
 // not match above  - go to cart
 function non_match_page() {
 
-	global $bm_categories, $tree, $cart, $cartShowTotal, $currency, $currencies;
+    global $bm_categories, $tree, $cart, $cartShowTotal, $currency, $currencies;
 
-	list($requestURI, $catalogFolder, $subject) = requestURI();
-	$pattern = '/(index.php\?main_page=shopping_cart|shopping_cart.php)/';
-  
-  // error log
-	error_log('version='.PROJECT_VERSION.', requestURI='.$requestURI, $catalogFolder, $subject);
-  
-  preg_match($pattern, $subject, $matches); 
+    list($requestURI, $catalogFolder, $subject) = requestURI();
+    $pattern = '/(index.php\?main_page=shopping_cart|shopping_cart.php)/';
 
-	return (boolean) $matches;
-	
+    // error log
+    error_log('version=' . PROJECT_VERSION . ', requestURI=' . $requestURI, $catalogFolder, $subject);
+
+    preg_match($pattern, $subject, $matches);
+
+    return (boolean) $matches;
 }
-if (!non_match_page()) {  	
-	include 'mobile/cart.php';
-	die();	
-}
- 
 
+if (!non_match_page()) {
+    include 'mobile/cart.php';
+    die();
+}
 ?>
