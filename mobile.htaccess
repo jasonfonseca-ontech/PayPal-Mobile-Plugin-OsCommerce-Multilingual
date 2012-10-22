@@ -3,9 +3,8 @@ RewriteEngine on
 
 
 RewriteCond %{HTTP_COOKIE}                 !^.*showdesktop=1.*$ [NC]
-# Uncomment the next line to put the mobile plugin in test mode only (remove the "#")
-#RewriteCond %{HTTP_COOKIE}                 ^.*miabdebug=1.*$ [NC]
-
+# comment the next line to put the mobile plugin in live mode only (add the "#")
+RewriteCond %{HTTP_COOKIE}                 ^.*miabdebug=1.*$ [NC]
 
 RewriteCond %{REQUEST_URI}      !/mobile
 RewriteCond %{REQUEST_URI}      !/includes
