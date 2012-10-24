@@ -2,7 +2,7 @@
 <html lang="<?php echo $_SESSION['languages_code'] ?>">
 <head>
     <title><?php echo TITLE; ?></title>
-    <?php if($_SESSION['languages_code']!="en") : ?><meta charset="UTF-8"><?php endif; ?>
+    <meta http-equiv="Content-Type" content="text/html; charset=<?php echo strtolower(CHARSET) ?>">
     <link rel="search" type="application/opensearchdescription+xml" href="osd.xml" title="<?php echo $_['Search']; ?>"/>
 
 	<script type="text/javascript">
