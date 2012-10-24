@@ -245,6 +245,7 @@ function matchminicart()
 }
 if(matchminicart())
 {
+ 	header("Content-type: text/html; charset=".strtolower(CHARSET), true);
 	include 'mobile/minicart.php';
 	die();
 }
