@@ -1,5 +1,5 @@
 <?php
-
+	# For english, you may ignore the following section.
 	# Pour localiser le module en français il faut modifier le fichier mobile.php en paramétrant les variables suivantes :
 	# Anglais : $defaults = array('languages_code' => 'en', 'language' => 'english', 'languages_id' => 1);
 	# Français : $defaults = array('languages_code' => 'fr','language' => 'french','languages_id' => 4);
