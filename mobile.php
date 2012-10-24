@@ -1,5 +1,11 @@
 <?php
 
+	# Pour localiser le module en français il faut modifier le fichier mobile.php en paramétrant les variables suivantes :
+	# Anglais : $defaults = array('languages_code' => 'en', 'language' => 'english', 'languages_id' => 1);
+	# Français : $defaults = array('languages_code' => 'fr','language' => 'french','languages_id' => 4);
+	# la variable languages_id doit correspondre à l’identifiant de la langue française dans votre installation d’oscommerce.
+	$defaults = array( 'languages_code' => 'en', 'language' => 'english', 'languages_id' => 1 );
+
 	ini_set('display_errors', 'off');
 	
 	if(isset($_GET["main_page"]) && $_GET["main_page"] == "login")
@@ -138,11 +144,7 @@
 		  echo 'ext/modules/payment/paypal/express.php';
 	}
 	
-	$defaults = array(
-		'languages_code' => 'en',
-		'language' => 'english',
-		'languages_id' => 1
-	);
+	
 	$_SESSION = array_merge($defaults, $_SESSION);
 	include("mobile/language_".$_SESSION['languages_code'] .".php");
 
