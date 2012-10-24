@@ -1,14 +1,13 @@
-ErrorDocument 404 /mobile/404.php
+# ErrorDocument 404 /mobile/404.php
 RewriteEngine on
 
-
-RewriteCond %{HTTP_COOKIE}                 !^.*showdesktop=1.*$ [NC]
 # comment the next line to put the mobile plugin in live mode only (add the "#")
 RewriteCond %{HTTP_COOKIE}                 ^.*miabdebug=1.*$ [NC]
 
-RewriteCond %{REQUEST_URI}      !/mobile
-RewriteCond %{REQUEST_URI}      !/includes
-RewriteCond %{REQUEST_URI}      !/images
+RewriteCond %{HTTP_COOKIE}                 !^.*showdesktop=1.*$ [NC]
+RewriteCond %{REQUEST_URI}    !/mobile
+RewriteCond %{REQUEST_URI}    !/includes
+RewriteCond %{REQUEST_URI}    !/images
 RewriteCond %{REQUEST_URI} 		!/ipn_main_handler.php
 RewriteCond %{REQUEST_URI}   	!/checkout_process.php
 RewriteCond %{REQUEST_URI} 		!/account.php
@@ -17,6 +16,4 @@ RewriteCond %{REQUEST_URI} 		!/ext/modules/payment/paypal/express.php
 RewriteCond %{REQUEST_URI}   	!/ext/modules/payment/paypal/express_mobile.php
 RewriteCond %{HTTP_USER_AGENT} iPad|iPod|iPhone|Android|\s+Mobile 
 RewriteCond %{HTTP_USER_AGENT} !iPad 
-
 RewriteRule .* /mobile.php [L] 
-# izemerchant 
