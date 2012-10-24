@@ -1,11 +1,12 @@
 <?php
 	# For english, you may ignore the following section.
-	# Pour localiser le module en franÃ§ais il faut modifier le fichier mobile.php en paramÃ©trant les variables suivantes :
-	# Anglais : $defaults = array('languages_code' => 'en', 'language' => 'english', 'languages_id' => 1);
-	# FranÃ§ais : $defaults = array('languages_code' => 'fr','language' => 'french','languages_id' => 4);
-	# la variable languages_id doit correspondre Ã  lâ€™identifiant de la langue franÃ§aise dans votre installation dâ€™oscommerce.
-	$defaults = array( 'languages_code' => 'en', 'language' => 'english', 'languages_id' => 1 );
-
+	# Pour localiser le module en français il faut modifier le fichier mobile.php en paramétrant les variables suivantes 
+	# Anglais : $defaults = array('languages_code' => 'en');
+	# Français : $defaults = array('languages_code' => 'fr');
+	# la variable languages_id doit correspondre à l’identifiant de la langue française dans votre installation d’oscommerce.
+	$defaults = array( 'languages_code' => 'en' );
+        $catalog_path = "";
+        
 	ini_set('display_errors', 'off');
 	
 	if(isset($_GET["main_page"]) && $_GET["main_page"] == "login")
@@ -16,7 +17,6 @@
 	}
 
 	define('SKIP_SINGLE_PRODUCT_CATEGORIES', 'False');
-	$catalog_path = "";
 	require('includes/application_top.php');
 	require('includes/classes/http_client.php');
 	require('includes/database_tables.php');
@@ -147,6 +147,10 @@
 	
 	$_SESSION = array_merge($defaults, $_SESSION);
 	include("mobile/language_".$_SESSION['languages_code'] .".php");
+	$lang = (tep_db_fetch_array(tep_db_query("SELECT languages_id, directory FROM " . TABLE_LANGUAGES . " WHERE code='".$_SESSION['languages_code']."'")));
+	$defaults['language'] = $lang['directory'];
+	$defaults['languages_id'] = $lang['languages_id'];
+	$_SESSION = array_merge($defaults, $_SESSION);
 
 	function get_paypalLanguages(){ 
 		$l = array();
@@ -218,6 +222,7 @@ function matchcart() {
 }
 if(matchcart())
 {
+    header("Content-type: text/html; charset=".strtolower(CHARSET), true);
     include 'mobile/cart.php';
     die();	
 }
@@ -290,6 +295,7 @@ function matchcategory(){
 }
 if(matchcategory())
 {
+    header("Content-type: text/html; charset=".strtolower(CHARSET), true);
   	$select_column_list = 'pd.products_name, p.products_image, ';
     $listing_sql = "select " . $select_column_list . " p.products_id, p.manufacturers_id, p.products_price, p.products_tax_class_id, IF(s.status, s.specials_new_products_price, NULL) as specials_new_products_price, IF(s.status, s.specials_new_products_price, p.products_price) as final_price from " . TABLE_PRODUCTS_DESCRIPTION . " pd, " . TABLE_PRODUCTS . " p left join " . TABLE_MANUFACTURERS . " m on p.manufacturers_id = m.manufacturers_id left join " . TABLE_SPECIALS . " s on p.products_id = s.products_id, " . TABLE_PRODUCTS_TO_CATEGORIES . " p2c where p.products_status = '1' and p.products_id = p2c.products_id and pd.products_id = p2c.products_id and pd.language_id = '" . (int)$languages_id . "' and p2c.categories_id = '" . (int)$current_category_id . "'";
     $categories_query = tep_db_query("select count(*) as total from " . TABLE_CATEGORIES . " c, " . TABLE_CATEGORIES_DESCRIPTION . " cd where c.parent_id = '" . (int)$category_links[$i] . "' and c.categories_id = cd.categories_id and cd.language_id = '" . (int)$languages_id . "'");

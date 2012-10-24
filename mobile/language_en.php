@@ -5,7 +5,7 @@ $_['oops'] = "Oops";
 $_['Total'] = "Total";
 $_['Sorry the page you visited does not exist'] = "Sorry the page you visited doesn't exist";
 $_['cart'] = "Cart";
-$_['name'] = "Name";
+$_['name'] = $_['Name'] = "Name";
 $_['price']= "Price";
 $_['delete'] = "Delete";
 $_['qty'] = "Qty";
@@ -86,4 +86,9 @@ $_['items in your cart'] = "items in your cart";
 $_['the total is'] = "the total is";
 $_['Product Options'] = "Product Options";
 $_['No Products in this category'] = "No Products in this category";
-?>
+
+$_['Address'] = "Address";
+$_['Billing Address'] = "Billing Address";
+$_['Shipping Address'] = "Shipping Address";
+$_['Addresses'] = "Addresses";
+$_['Pay Now'] = "Pay Now";

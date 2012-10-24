@@ -50,6 +50,14 @@ $_['the total is'] = "le total est";
 $_['Product Options'] = "options du produit";
 $_['No Products in this category'] = "Pas de produits dans cette cat�gorie";
 
+
+$_['Address'] = "Adresse";
+$_['Billing Address'] = "Adresse de facturation";
+$_['Shipping Address'] = "Adresse de livraison";
+$_['Addresses'] = "Les adresses";
+$_['Pay Now'] = "Payer Maintenant";
+
+
 foreach($_ as $k => $v){
 	$_[$k] =  iconv("ISO-8859-1//TRANSLIT",CHARSET, $v);
 }

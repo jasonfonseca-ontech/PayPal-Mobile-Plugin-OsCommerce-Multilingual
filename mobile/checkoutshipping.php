@@ -213,35 +213,35 @@ require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_CHECKOUT_SHIPPING);
     <div id="main-page">
         <div id="content">
 
-            <h3>Addresses</h3>
+            <h3><?php echo $_['Addresses'] ?></h3>
             <div id="checkoutaddresses">
                 <ul data-role="listview" data-inset="true" class="products ui-listview ui-listview-inset ui-corner-all ui-shadow" style="margin: 4px; width: 300px;">
                     <li data-role="list-divider" role="heading" class="ui-li ui-li-divider ui-btn ui-bar-b ui-btn-up-undefined ui-corner-top">
-                        Billing Address
+                        <?php echo $_['Billing Address'] ?>
                     </li>
                     <li style="text-align:center; padding:2px;" class="ui-li ui-li-static ui-body-c">
                         <table class="reviewaddresses">
                             <tbody><tr>
-                                    <td>Name</td><td><?php echo $_SESSION['billto']['firstname'] . " " . $_SESSION['billto']['lastname'] ?></td>
+                                    <td><?php echo $_['Name'] ?></td><td><?php echo $_SESSION['billto']['firstname'] . " " . $_SESSION['billto']['lastname'] ?></td>
                                 </tr>
 
                                 <tr>
-                                    <td>Address</td>
+                                    <td><?php echo $_['Address'] ?></td>
                                     <td>
-<?php echo ($_SESSION['billto']['street_address']) ?><br>
-<?php echo ($_SESSION['billto']['suburb']) ?><br>
-<?php echo ($_SESSION['billto']['city']) ?>, <?php echo ($_SESSION['billto']['postcode']) ?>
+<?php echo stripslashes($_SESSION['billto']['street_address']) ?><br>
+<?php echo stripslashes($_SESSION['billto']['suburb']) ?><br>
+<?php echo stripslashes($_SESSION['billto']['city']) ?>, <?php echo stripslashes($_SESSION['billto']['postcode']) ?>
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td>Email</td>
+                                    <td><?php echo $_['Email'] ?></td>
                                     <td><span class="email" title="<?php echo $order->customer['email_address'] ?>"><?php echo $order->customer['email_address'] ?></span></td>
                                 </tr>
                             </tbody></table>
                     </li>
                     <li data-role="list-divider" role="heading" class="ui-li ui-li-divider ui-btn ui-bar-b ui-btn-up-undefined">
-                        Shipping Address
+                          <?php echo $_['Shipping Address'] ?>
                     </li>
                     <li style="text-align:center; padding:2px;" class="ui-li ui-li-static ui-body-c ui-corner-bottom">
                         <table class="reviewaddresses">
@@ -253,9 +253,9 @@ require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_CHECKOUT_SHIPPING);
                                 <tr>
                                     <td>Address</td>
                                     <td>
-<?php echo ($_SESSION['sendto']['street_address']) ?><br>
-<?php echo ($_SESSION['sendto']['suburb']) ?><br>
-<?php echo ($_SESSION['sendto']['city']) ?>, <?php echo ($_SESSION['sendto']['postcode']) ?>
+<?php echo stripslashes($_SESSION['sendto']['street_address']) ?><br>
+<?php echo stripslashes($_SESSION['sendto']['suburb']) ?><br>
+<?php echo stripslashes($_SESSION['sendto']['city']) ?>, <?php echo stripslashes($_SESSION['sendto']['postcode']) ?>
                                     </td>
                                 </tr>
                                 <tr style="display:none">
@@ -277,9 +277,7 @@ require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_CHECKOUT_SHIPPING);
                     <table border="0" width="100%" cellspacing="1" cellpadding="2" class="infoBox">
                         <tr class="infoBoxContents">
                             <td><table border="0" width="100%" cellspacing="0" cellpadding="2">
-<?php
-if (sizeof($quotes) > 1 && sizeof($quotes[0]) > 1) {
-    ?>
+                                        <?php if (sizeof($quotes) > 1 && sizeof($quotes[0]) > 1) { ?>
                                         <tr>
                                             <td><?php echo tep_draw_separator('pixel_trans.gif', '10', '1'); ?></td>
                                             <td class="main" width="50%" valign="top"><?php echo TEXT_CHOOSE_SHIPPING_METHOD; ?></td>
@@ -422,8 +420,8 @@ if (sizeof($quotes) > 1 && sizeof($quotes[0]) > 1) {
                         ?>
                     </table>
                 </div>
-                <button type="submit" data-theme="e" value="submit-value" data-role="button" class="ui-body">Pay Now</button>
-                Total: <span class="total"><?php echo $order->info['total'] ?></span>
+                <button type="submit" data-theme="e" value="submit-value" data-role="button" class="ui-body"><?php echo $_['Pay Now'] ?></button>
+                <?php echo $_['Total'] ?>: <span class="total"><?php echo $order->info['total'] ?></span>
             </fieldset>
 
         </div>
