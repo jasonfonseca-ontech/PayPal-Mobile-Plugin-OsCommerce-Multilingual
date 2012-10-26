@@ -1,9 +1,9 @@
 <?php
 	# For english, you may ignore the following section.
-	# Pour localiser le module en français il faut modifier le fichier mobile.php en paramétrant les variables suivantes 
+	# Pour localiser le module en franï¿½ais il faut modifier le fichier mobile.php en paramï¿½trant les variables suivantes 
 	# Anglais : $defaults = array('languages_code' => 'en');
-	# Français : $defaults = array('languages_code' => 'fr');
-	# la variable languages_id doit correspondre à l’identifiant de la langue française dans votre installation d’oscommerce.
+	# Franï¿½ais : $defaults = array('languages_code' => 'fr');
+	# la variable languages_id doit correspondre ï¿½ lï¿½identifiant de la langue franï¿½aise dans votre installation dï¿½oscommerce.
 	$defaults = array( 'languages_code' => 'en' );
         $catalog_path = "";
         
@@ -21,6 +21,7 @@
 	require('includes/classes/http_client.php');
 	require('includes/database_tables.php');
 	tep_session_unregister('navigation');
+        header("Content-type: text/html; charset=".strtolower(CHARSET), true);
 
 	if(defined("PROJECT_VERSION"))
 	{
@@ -222,7 +223,6 @@ function matchcart() {
 }
 if(matchcart())
 {
-    header("Content-type: text/html; charset=".strtolower(CHARSET), true);
     include 'mobile/cart.php';
     die();	
 }
