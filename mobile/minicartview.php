@@ -8,7 +8,9 @@ $products = $_SESSION['cart']->get_products();
 <?php 
 if (($_SESSION['cart']->count_contents()) == 0) {
 ?>
-<li data-role="list-divider" role="heading" class="ui-li ui-li-divider ui-btn ui-bar-b ui-corner-top ui-btn-up-undefined ui-corner-bottom"><?php echo $_['Your cart is empty']; ?></li>
+<li data-role="list-divider" role="heading" class="ui-li ui-li-divider ui-btn ui-bar-b ui-corner-top ui-btn-up-undefined ui-corner-bottom">
+<?php echo $_L['Your cart is empty']; ?>
+</li>
 <?php
 } else {
 ?>
