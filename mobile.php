@@ -5,6 +5,7 @@
 	# Fran�ais : $defaults = array('languages_code' => 'fr');
 	# la variable languages_id doit correspondre � l�identifiant de la langue fran�aise dans votre installation d�oscommerce.
 	$defaults = array( 'languages_code' => 'en' );
+	$_GET['language'] = $defaults['languages_code'];
         $catalog_path = "";
         
 	ini_set('display_errors', 'off');
