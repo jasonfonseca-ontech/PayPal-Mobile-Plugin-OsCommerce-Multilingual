@@ -222,7 +222,7 @@ require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_CHECKOUT_SHIPPING);
                     <li style="text-align:center; padding:2px;" class="ui-li ui-li-static ui-body-c">
                         <table class="reviewaddresses">
                             <tbody><tr>
-                                    <td><?php echo $_['Name'] ?></td><td><?php echo $_SESSION['billto']['firstname'] . " " . $_SESSION['billto']['lastname'] ?></td>
+                                    <td><?php echo $_['Name'] ?></td><td><?php echo  stripslashes($_SESSION['billto']['firstname'] . " " . $_SESSION['billto']['lastname']) ?></td>
                                 </tr>
 
                                 <tr>
@@ -236,7 +236,7 @@ require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_CHECKOUT_SHIPPING);
 
                                 <tr>
                                     <td><?php echo $_['Email'] ?></td>
-                                    <td><span class="email" title="<?php echo $order->customer['email_address'] ?>"><?php echo $order->customer['email_address'] ?></span></td>
+                                    <td><span class="email" title="<?php echo $order->customer['email_address'] ?>"><?php echo  stripslashes($order->customer['email_address']) ?></span></td>
                                 </tr>
                             </tbody></table>
                     </li>
@@ -247,11 +247,11 @@ require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_CHECKOUT_SHIPPING);
                         <table class="reviewaddresses">
                             <tbody>
                                 <tr>
-                                    <td>Name</td><td><?php echo $_SESSION['sendto']['firstname'] . " " . $_SESSION['sendto']['lastname'] ?></td>
+                                    <td><?php echo $_['Name'] ?></td><td><?php echo stripslashes($_SESSION['sendto']['firstname'] . " " . $_SESSION['sendto']['lastname']) ?></td>
                                 </tr>
 
                                 <tr>
-                                    <td>Address</td>
+                                    <td><?php echo $_['Address'] ?></td>
                                     <td>
 <?php echo stripslashes($_SESSION['sendto']['street_address']) ?><br>
 <?php echo stripslashes($_SESSION['sendto']['suburb']) ?><br>
