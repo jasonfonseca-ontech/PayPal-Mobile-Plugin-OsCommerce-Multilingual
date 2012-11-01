@@ -92,3 +92,7 @@ $_['Billing Address'] = "Billing Address";
 $_['Shipping Address'] = "Shipping Address";
 $_['Addresses'] = "Addresses";
 $_['Pay Now'] = "Pay Now";
+
+foreach($_ as $k => $v){	
+$_[$k] =  iconv("ISO-8859-1//TRANSLIT",CHARSET, $v);
+}
