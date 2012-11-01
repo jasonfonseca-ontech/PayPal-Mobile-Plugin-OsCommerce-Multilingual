@@ -4,6 +4,9 @@ RewriteEngine on
 # comment the next line to put the mobile plugin in live mode only (add the "#")
 RewriteCond %{HTTP_COOKIE}                 ^.*miabdebug=1.*$ [NC]
 
+# change the following directory to your admin directory, this will allow you to view your admin on mobile
+RewriteCond %{REQUEST_URI}    !/admin
+
 RewriteCond %{HTTP_COOKIE}                 !^.*showdesktop=1.*$ [NC]
 RewriteCond %{REQUEST_URI}    !/mobile
 RewriteCond %{REQUEST_URI}    !/includes
