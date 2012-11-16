@@ -13,8 +13,9 @@ $_['Thank You! We Appreciate your Business!'] = "Dank u! We stellen uw klandizie
 $_['OsCommerce'] = "OsCommerce";
 $_['cookies'] = "Cookies zijn op dit moment niet ingeschakeld in uw browser. Cookies zijn nodig om op deze website te kunnen winkelen. 
 In de browser van uw telefoon vindt u een voorkeursinstelling waarmee u cookies desgewenst opnieuw kunt inschakelen.";
+$_['You can click here once you have enabled them again to start shopping.'] = 'U kunt <a href="./">click here</a> zodra u hebt ingeschakeld ze weer om te winkelen.';
 $_['Done'] = "Gereed";
-$_['you'] = "u kunt"; NOT PRESENT
+$_['you'] = "u"; NOT PRESENT
 $_['Home'] = "Home";
 $_['Categories'] = "Rubrieken";
 $_['Search'] = "Zoeken";

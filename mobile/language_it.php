@@ -1,4 +1,5 @@
 <?php
+
 $_['Products'] = "Prodotti";
 $_['Featured Products'] = "Top Prodotti";
 $_['Oops'] = "Oops";

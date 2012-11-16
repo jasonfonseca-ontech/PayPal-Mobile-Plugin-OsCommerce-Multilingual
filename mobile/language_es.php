@@ -43,7 +43,7 @@ $_['Update Cart'] = "Actualizar carro";
 $_['Edit Cart'] = "Modificar carro";
 $_['There is no description for this product'] = 'No hay ninguna descripción de este producto'; NOT PRESENT
 $_['You have x items in your cart the total is y'] = 'Artículos en el carro: <span class="itemcount">{count}</span>.<br/>Total:<span class="total">{total}</span>';
-$_['Your order number is x'] = "El número de su pedido es:";
+$_['Your order number is x'] = "El número de su pedido es: {order}";
 $_['You have'] = "Tiene"; NOT PRESENT
 $_['items in your cart'] = "artículos en su carrito"; NOT PRESENT
 $_['the total is'] = "el total es"; NOT PRESENT
